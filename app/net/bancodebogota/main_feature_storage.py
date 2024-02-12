@@ -3,19 +3,9 @@ from .feature_functions import calcular_edad,calcular_generacion,calcular_grupo_
 import argparse
 from .globals import fc
 
-def log_and_append(message, error=None, error_type="ERROR"):
-    full_message = f"{message}: {error}" if error else message
-    fc.append_df(error_type, full_message)
-    if error_type == "ERROR":
-        fc.create_file_bucket()
-    print(f"{error_type} {full_message}")
-
-def try_except_wrapper(func, error_msg, *args, **kwargs):
-    try:
-        return func(*args, **kwargs)
-    except Exception as e:
-        log_and_append(error_msg, e)
-        return None  # or a default value as appropriate
+def handle_error_and_create_bucket(error_msg, e=None):
+    fc.append_df("ERROR", f"{error_msg}: {e}" if e else error_msg)
+    fc.create_file_bucket()
 
 def intermediate_function(df, params):
     try:
@@ -25,7 +15,7 @@ def intermediate_function(df, params):
         df_clean = cols_minuscula(df_group)
         return df_clean
     except Exception as e:
-        log_and_append("Error in intermediate_function", e)
+        handle_error_and_create_bucket("Error in intermediate_function", e)
 
 def main_intermediate(blob_path, blob_path_inter, output_path_intermediate):
     try:
@@ -38,9 +28,9 @@ def main_intermediate(blob_path, blob_path_inter, output_path_intermediate):
         df_to_storage_parquet(df_clean, output_path_intermediate)
     except FileNotFoundError as e:
         if "blob_path" in str(e) or "blob_path_inter" in str(e):
-            log_and_append(".yml file not found at path", e)
+            handle_error_and_create_bucket(".yml file not found at path", e)
     except Exception as e:
-        log_and_append("Unexpected error in main_intermediate", e)
+        handle_error_and_create_bucket("Unexpected error in main_intermediate", e)
 
 def feature_function(df, params):
     df2 = calcular_edad(df, params['col_fecha_nacimiento'])
@@ -55,15 +45,15 @@ def main_feature_processing(blob_path, path_intermediate, nombre_archivo_parquet
         fc.append_df("INFO", f"Intermediate parquet read from Google Storage, Dimension: {df_intermediate.shape}")
         print(f"INFO Intermediate parquet read from Google Storage, Dimension: {df_intermediate.shape}")
         if df_intermediate.empty:
-            log_and_append("No data found in the intermediate parquet file.")
+            handle_error_and_create_bucket("No data found in the intermediate parquet file.")
         df_feature = feature_function(df_intermediate, params)
         fc.append_df("INFO", "Features created successful")
         print("INFO Features created successful")
         feature_to_storage_parquet(df_feature, output_path, nombre_archivo_parquet)
     except FileNotFoundError as e:
-        log_and_append(".yml file not found at path", e)
+        handle_error_and_create_bucket(".yml file not found at path", e)
     except Exception as e:
-        log_and_append("Unexpected error in main_feature_processing", e)
+        handle_error_and_create_bucket("Unexpected error in main_feature_processing", e)
 
 def main(blob_path, blob_path_inter, output_path_intermediate, output_path):
     try:
@@ -76,7 +66,7 @@ def main(blob_path, blob_path_inter, output_path_intermediate, output_path):
         fc.create_file_bucket()
         print("INFO Feature extraction process successful")
     except Exception as e:
-        log_and_append("Unexpected error in the main process", e)
+        handle_error_and_create_bucket("Unexpected error in the main process", e)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -86,3 +76,4 @@ if __name__ == "__main__":
     parser.add_argument('--output_path', type=str, help='Final Path feature store')
     args = parser.parse_args()
     main(args.blob_path, args.blob_path_inter, args.output_path_intermediate, args.output_path)
+
