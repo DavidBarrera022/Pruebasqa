@@ -45,6 +45,7 @@ class ClLibFrameworkControl:
             file_name = self.name_app + '_' + fecha_convert_colombiana + '.log'
             path_file = 'logs/' + file_name
 
+
             # Usando tempfile para manejar archivos de forma segura
             with tempfile.NamedTemporaryFile(mode='w+', delete=False, dir="/tmp", suffix='.log') as temp_file:
                 self.log_df.to_csv(temp_file.name, index=False, header=True, sep="|")
