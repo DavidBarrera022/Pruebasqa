@@ -55,7 +55,6 @@ def calcular_edad(df: pd.DataFrame, fecha_nacimiento: str) -> pd.DataFrame:
     pd.DataFrame
         DataFrame con la nueva columna de edad del cliente.
     """
-    # df["edad"] = (pd.Timestamp("now") - df[fecha_nacimiento]).dt.days // 365
     df["edad"] = (pd.Timestamp("now") - df[fecha_nacimiento]).astype("timedelta64[Y]")
     return df
 
