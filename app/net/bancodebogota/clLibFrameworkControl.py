@@ -7,8 +7,6 @@ import tempfile
 class ClLibFrameworkControl:
     # Define the parameters
     def __init__(self):
-        # self.bucket = bucket
-        # self.file = file
         self.log_df = pd.DataFrame()
         self.name_app = ""
 
